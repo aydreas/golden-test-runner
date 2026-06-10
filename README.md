@@ -148,6 +148,34 @@ Example failure report:
 1 scenario, 0 passed, 1 failed (1 field mismatch)
 ```
 
+### `golden import`
+
+Converts a browser-recorded **HAR** into a draft spec, so you can author specs
+by *using the app* instead of hand-writing YAML. Open DevTools → Network, play
+out one scenario, *Save all as HAR*, then:
+
+```bash
+golden import --har recording.har --name signup
+```
+
+It filters to your `baseUrl` (dropping static assets, analytics, `OPTIONS`
+preflights and poll duplicates), classifies REST vs GraphQL, and **auto-detects
+chaining** — when a value from an earlier response reappears in a later request
+(a created `id`, a login `token`), it adds a `capture:` to the producing step
+and rewrites the consumer to `{{var}}`. The detection is heuristic, so the
+output is a **draft** to review before `generate`.
+
+| Flag | Description |
+|------|-------------|
+| `--har <file>` | HAR file exported from the browser (required) |
+| `--name <scenario>` | scenario name (default: HAR filename) |
+| `-o, --out <path>` | output spec path (default: `<name>.spec.yaml`) |
+| `-c, --config <path>` | config file path |
+| `--dry-run` | print the spec without writing it |
+
+Allow/deny lists (`import.include` / `import.exclude`, matched against the URL
+path) further narrow what's kept.
+
 ## Programmatic API
 
 ```ts
