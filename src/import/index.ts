@@ -27,7 +27,12 @@ function stripLeftoverAuth(steps: ImportStep[]): void {
 }
 
 /** Convert a HAR document into a draft spec (no responses). */
-export function importHar(har: unknown, config: Config, name: string): ImportResult {
+export function importHar(
+  har: unknown,
+  config: Config,
+  name: string,
+  options: { chaining?: boolean } = {},
+): ImportResult {
   const steps = parseHar(har, config);
   if (steps.length === 0) {
     throw new HarError(
@@ -35,7 +40,7 @@ export function importHar(har: unknown, config: Config, name: string): ImportRes
     );
   }
 
-  detectChaining(steps);
+  if (options.chaining !== false) detectChaining(steps);
   stripLeftoverAuth(steps);
 
   const specSteps: SpecStep[] = steps.map((s) => ({

@@ -103,12 +103,13 @@ program
   .option('-o, --out <path>', 'output spec path')
   .option('-c, --config <path>', 'path to config file')
   .option('--dry-run', 'print the spec without writing it')
+  .option('--no-chaining', 'skip the capture/chaining heuristic')
   .action(async (opts) => {
     try {
       const { config } = await loadConfig({ configPath: opts.config });
       const har = JSON.parse(await readFile(opts.har, 'utf8'));
       const name = opts.name ?? basename(opts.har).replace(/\.har$/i, '');
-      const { yaml, stepCount } = importHar(har, config, name);
+      const { yaml, stepCount } = importHar(har, config, name, { chaining: opts.chaining });
 
       if (opts.dryRun) {
         console.log(yaml);
