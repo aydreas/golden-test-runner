@@ -4,6 +4,7 @@
   "description": "Golden-sample e2e test runner for REST and GraphQL APIs. Generate goldens from hand-written specs, then run and diff against a live server.",
   "type": "module",
   "license": "GPL-3.0-or-later",
+  "author": "aydreas <andreas.sch4@gmail.com>",
   "bin": {
     "golden": "dist/cli.js"
   },
