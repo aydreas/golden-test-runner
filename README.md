@@ -46,7 +46,6 @@ Requires Node 20+. Exposes a `golden` CLI and a programmatic API.
 
    ```yaml
    name: user-signup-and-first-post
-   config: { reset: true }
    steps:
      - name: create-user
        graphql:
@@ -84,6 +83,13 @@ Requires Node 20+. Exposes a `golden` CLI and a programmatic API.
 - **Golden** — generated; the spec's steps **plus recorded responses**, where
   captured values appear symbolically as `{{name}}` and volatile fields are
   replaced with the `<<ignore>>` sentinel so goldens are stable in git.
+- **`pure: true`** — marks a scenario that only *reads* and never modifies the
+  database. The DB reset before the **next** scenario is then skipped (a pure
+  scenario leaves the DB clean), which speeds up suites with read-only flows. A
+  scenario after a non-pure one still resets, so every scenario sees clean
+  state. `golden import` sets `pure` automatically when a recording contains
+  only `GET`/`HEAD` requests and GraphQL queries (no mutations). Only applies to
+  sequential runs (`--concurrency 1`).
 
 ### How volatile / dynamic values are handled
 

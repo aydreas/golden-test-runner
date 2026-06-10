@@ -79,9 +79,8 @@ describe('transport + engine integration', () => {
   });
 
   it('runs the shell reset hook', async () => {
-    expect(resetEnabled(config, undefined, false)).toBe(true);
-    expect(resetEnabled(config, { reset: false }, false)).toBe(false);
-    expect(resetEnabled(config, undefined, true)).toBe(false);
+    expect(resetEnabled(config, false)).toBe(true);
+    expect(resetEnabled(config, true)).toBe(false); // --no-reset
     await expect(runReset(config)).resolves.toBeUndefined();
   });
 });

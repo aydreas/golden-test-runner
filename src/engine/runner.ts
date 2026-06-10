@@ -1,5 +1,5 @@
 import type { Config } from '../config/schema.js';
-import type { SpecStep, GoldenStep, ScenarioConfig } from '../spec/types.js';
+import type { SpecStep, GoldenStep } from '../spec/types.js';
 import { Context } from './context.js';
 import { applyCaptures } from './capture.js';
 import { runReset, resetEnabled } from './reset.js';
@@ -22,7 +22,11 @@ export interface ScenarioRun {
 export interface RunScenarioOptions {
   /** CLI --no-reset. */
   forceNoReset?: boolean;
-  scenarioConfig?: ScenarioConfig;
+  /**
+   * Skip the reset for this scenario because the preceding scenario was `pure`
+   * (left the DB clean). Decided by the orchestrator, which knows the ordering.
+   */
+  skipReset?: boolean;
 }
 
 /**
@@ -35,7 +39,7 @@ export async function runScenario(
   config: Config,
   opts: RunScenarioOptions = {},
 ): Promise<ScenarioRun> {
-  if (resetEnabled(config, opts.scenarioConfig, opts.forceNoReset ?? false)) {
+  if (!opts.skipReset && resetEnabled(config, opts.forceNoReset ?? false)) {
     await runReset(config);
   }
 

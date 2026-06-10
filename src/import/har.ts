@@ -83,6 +83,26 @@ function operationNameFromQuery(query: string): string | undefined {
   return m?.[1];
 }
 
+/**
+ * Classify a GraphQL operation. The operation keyword always precedes the first
+ * selection-set `{`, so we only inspect the head — field/type names containing
+ * "mutation" (inside the braces) won't false-positive. Shorthand `{ … }` is a query.
+ */
+export function graphqlOperationType(query: string): 'query' | 'mutation' | 'subscription' {
+  const brace = query.indexOf('{');
+  const head = brace === -1 ? query : query.slice(0, brace);
+  if (/\bmutation\b/.test(head)) return 'mutation';
+  if (/\bsubscription\b/.test(head)) return 'subscription';
+  return 'query';
+}
+
+/** Whether a step only reads (GET/HEAD, or a GraphQL query) — never writes. */
+export function isReadOnlyStep(step: ImportStep): boolean {
+  if (step.rest) return step.rest.method === 'GET' || step.rest.method === 'HEAD';
+  if (step.graphql) return graphqlOperationType(step.graphql.query) === 'query';
+  return false;
+}
+
 function lastSegment(pathname: string): string {
   const parts = pathname.split('/').filter(Boolean);
   return parts.length ? parts[parts.length - 1]! : 'root';

@@ -69,10 +69,11 @@ export async function runGoldenScenario(
   file: string,
   config: Config,
   opts: RunOptions = {},
+  skipReset = false,
 ): Promise<ScenarioResult> {
   const run = await runScenario(golden.steps, config, {
     forceNoReset: opts.forceNoReset,
-    scenarioConfig: golden.config,
+    skipReset,
   });
 
   const matchers = [...config.normalize.matchers, ...(golden.matchers ?? [])];
@@ -137,14 +138,20 @@ export async function runGoldens(
 
   let results: ScenarioResult[];
   if (limit === 1) {
-    // Sequential — supports --bail.
+    // Sequential — supports --bail and the `pure` reset optimization: a reset
+    // is skipped when the preceding scenario was pure (it left the DB clean).
+    // Safe by invariant: a pure scenario leaves the DB as clean as its own
+    // pre-reset state, so every scenario still observes a freshly-reset DB.
     results = [];
+    let skipNextReset = false;
     for (const { file, golden } of loaded) {
-      const result = await runGoldenScenario(golden, file, config, opts);
+      const result = await runGoldenScenario(golden, file, config, opts, skipNextReset);
       results.push(result);
+      skipNextReset = golden.pure === true;
       if (opts.bail && !result.ok) break;
     }
   } else {
+    // Concurrent: ordering is undefined, so the `pure` optimization can't apply.
     results = await pool(loaded.length, limit, (i) =>
       runGoldenScenario(loaded[i]!.golden, loaded[i]!.file, config, opts),
     );

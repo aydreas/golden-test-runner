@@ -37,16 +37,20 @@ program
       const specs = await discover(pattern);
       if (specs.length === 0) fail(`No spec files matched: ${pattern}`);
 
+      let skipNextReset = false;
       for (const specFile of specs) {
-        const { outputPath, skipped } = await generate(specFile, config, {
+        const { golden, outputPath, skipped } = await generate(specFile, config, {
           forceNoReset: opts.reset === false,
           outDir: opts.out,
           update: opts.update,
+          skipReset: skipNextReset,
           now: new Date().toISOString(),
         });
         if (skipped) {
+          // Not run → DB untouched → leave the skip state as the last run scenario set it.
           console.log(`• skipped ${outputPath} (exists — use --update to regenerate)`);
         } else {
+          skipNextReset = golden?.pure === true;
           console.log(`✓ generated ${outputPath}`);
         }
       }

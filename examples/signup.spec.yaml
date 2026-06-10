@@ -1,8 +1,7 @@
 name: user-signup-and-first-post
 description: Sign up a user over GraphQL, create a post as that user, then log in over REST.
 
-config:
-  reset: true
+# Not `pure`: this scenario creates a user and a post, so it modifies the DB.
 
 steps:
   - name: create-user

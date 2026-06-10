@@ -94,7 +94,47 @@ describe('HAR import', () => {
     expect(JSON.stringify(me.rest)).not.toContain('Mozilla');
   });
 
+  it('does not mark a suite with mutations/POSTs as pure', () => {
+    const { spec } = importHar(har, config, 'browsed-flow');
+    expect(spec.pure).toBeUndefined();
+  });
+
+  it('marks a read-only suite (GET + GraphQL query) as pure', () => {
+    const readOnly = {
+      log: {
+        entries: [
+          entry(
+            {
+              method: 'POST',
+              url: 'http://localhost:8000/graphql',
+              postData: {
+                mimeType: 'application/json',
+                text: JSON.stringify({ query: 'query Listing { items { id } }' }),
+              },
+            },
+            { data: { items: [] } },
+          ),
+          entry({ method: 'GET', url: 'http://localhost:8000/api/health' }, { ok: true }),
+        ],
+      },
+    };
+    const { spec } = importHar(readOnly, config, 'read-only');
+    expect(spec.pure).toBe(true);
+  });
+
   it('throws when nothing matches the baseUrl', () => {
     expect(() => importHar({ log: { entries: [] } }, config, 'empty')).toThrow();
+  });
+});
+
+describe('graphqlOperationType', () => {
+  it('classifies queries, mutations, subscriptions, and shorthand', async () => {
+    const { graphqlOperationType } = await import('../src/import/har.js');
+    expect(graphqlOperationType('query Foo { a }')).toBe('query');
+    expect(graphqlOperationType('{ a b }')).toBe('query');
+    expect(graphqlOperationType('mutation Make($x: Int!) { create(x: $x) { id } }')).toBe('mutation');
+    expect(graphqlOperationType('subscription S { onEvent { id } }')).toBe('subscription');
+    // "mutation" appearing only as a field name must NOT count as a mutation
+    expect(graphqlOperationType('query Q { mutationLog { id } }')).toBe('query');
   });
 });

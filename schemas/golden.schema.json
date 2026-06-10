@@ -11,13 +11,8 @@
     "generatedAt": {
       "type": "string"
     },
-    "config": {
-      "type": "object",
-      "properties": {
-        "reset": {
-          "type": "boolean"
-        }
-      }
+    "pure": {
+      "type": "boolean"
     },
     "ignores": {
       "type": "array",

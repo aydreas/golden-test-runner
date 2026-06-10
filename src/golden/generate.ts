@@ -18,6 +18,8 @@ export interface GenerateOptions {
   now?: string;
   /** Overwrite an existing golden; without this, an existing golden is skipped. */
   update?: boolean;
+  /** Skip the reset for this scenario (preceding scenario was `pure`). */
+  skipReset?: boolean;
 }
 
 export interface GenerateResult {
@@ -35,7 +37,7 @@ export async function buildGolden(
 ): Promise<Golden> {
   const run = await runScenario(spec.steps, config, {
     forceNoReset: opts.forceNoReset,
-    scenarioConfig: spec.config,
+    skipReset: opts.skipReset,
   });
 
   if (run.error) {
@@ -68,7 +70,7 @@ export async function buildGolden(
     name: spec.name,
     specHash: hashSpec(spec),
     ...(opts.now ? { generatedAt: opts.now } : {}),
-    ...(spec.config ? { config: spec.config } : {}),
+    ...(spec.pure ? { pure: true } : {}),
     ...(spec.ignores ? { ignores: spec.ignores } : {}),
     ...(spec.matchers ? { matchers: spec.matchers } : {}),
     steps,

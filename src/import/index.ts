@@ -1,7 +1,7 @@
 import { stringify as stringifyYaml } from 'yaml';
 import type { Config } from '../config/schema.js';
 import { SpecSchema, type Spec, type SpecStep } from '../spec/types.js';
-import { parseHar, HarError, type ImportStep } from './har.js';
+import { parseHar, HarError, isReadOnlyStep, type ImportStep } from './har.js';
 import { detectChaining } from './detect-chaining.js';
 
 export { HarError };
@@ -45,9 +45,13 @@ export function importHar(har: unknown, config: Config, name: string): ImportRes
     ...(s.capture ? { capture: s.capture } : {}),
   }));
 
+  // A suite that only reads (GET/HEAD + GraphQL queries) doesn't modify the DB.
+  const pure = steps.every(isReadOnlyStep);
+
   const spec: Spec = {
     name,
     description: `Imported from HAR — review chaining/captures before generate.`,
+    ...(pure ? { pure: true } : {}),
     steps: specSteps,
   };
 

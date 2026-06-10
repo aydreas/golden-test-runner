@@ -1,20 +1,16 @@
 import { execa } from 'execa';
 import type { Config } from '../config/schema.js';
-import type { ScenarioConfig } from '../spec/types.js';
 
 export class ResetError extends Error {}
 
 /**
- * Decide whether reset runs for a scenario. Precedence:
- *   CLI --no-reset (forceDisabled) > scenario.config.reset > config.reset.enabled
+ * Whether reset is configured to run at all. Precedence:
+ *   CLI --no-reset (forceDisabled) > config.reset.enabled
+ * Whether it runs for a *given* scenario also depends on `pure` (a scenario
+ * preceded by a pure one needs no reset) — that's decided by the orchestrator.
  */
-export function resetEnabled(
-  config: Config,
-  scenario: ScenarioConfig | undefined,
-  forceDisabled: boolean,
-): boolean {
+export function resetEnabled(config: Config, forceDisabled: boolean): boolean {
   if (forceDisabled) return false;
-  if (scenario?.reset !== undefined) return scenario.reset;
   return config.reset.enabled;
 }
 

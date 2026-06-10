@@ -70,15 +70,14 @@ export const GoldenStepSchema = z
   });
 export type GoldenStep = z.infer<typeof GoldenStepSchema>;
 
-export const ScenarioConfigSchema = z.object({
-  reset: z.boolean().optional(),
-});
-export type ScenarioConfig = z.infer<typeof ScenarioConfigSchema>;
-
 export const SpecSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
-  config: ScenarioConfigSchema.optional(),
+  /**
+   * The scenario only reads — it does not modify the database. When true, the
+   * reset before the *next* scenario can be skipped (this one left the DB clean).
+   */
+  pure: z.boolean().optional(),
   ignores: z.array(z.string()).optional(),
   matchers: z.array(MatcherSchema).optional(),
   steps: z.array(SpecStepSchema).min(1),
@@ -89,7 +88,7 @@ export const GoldenSchema = z.object({
   name: z.string(),
   specHash: z.string().optional(),
   generatedAt: z.string().optional(),
-  config: ScenarioConfigSchema.optional(),
+  pure: z.boolean().optional(),
   ignores: z.array(z.string()).optional(),
   matchers: z.array(MatcherSchema).optional(),
   steps: z.array(GoldenStepSchema).min(1),
