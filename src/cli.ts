@@ -4,7 +4,7 @@ import { loadConfig } from './config/load.js';
 import { discover } from './spec/discover.js';
 import { generate } from './golden/generate.js';
 import { runGoldens } from './run.js';
-import { renderPretty } from './report/pretty.js';
+import { render, isReporterKind } from './report/index.js';
 import { join } from 'node:path';
 
 const program = new Command();
@@ -59,6 +59,7 @@ program
   .option('--reporter <kind>', 'pretty | json | junit', 'pretty')
   .action(async (opts) => {
     try {
+      if (!isReporterKind(opts.reporter)) fail(`Unknown reporter: ${opts.reporter}`);
       const { config } = await loadConfig({ configPath: opts.config });
       const pattern = opts.file ?? join(config.paths.goldenDir, '**/*.golden.yaml');
       const goldens = await discover(pattern);
@@ -68,9 +69,11 @@ program
         forceNoReset: opts.reset === false,
         filter: opts.filter,
         bail: opts.bail,
+        concurrency: opts.concurrency,
+        onWarn: (msg) => console.error(`⚠ ${msg}`),
       });
 
-      console.log(renderPretty(summary));
+      console.log(render(opts.reporter, summary));
       if (!summary.ok) process.exit(1);
     } catch (err) {
       fail(String((err as Error).message));

@@ -35,8 +35,26 @@ export interface RunOptions {
   forceNoReset?: boolean;
   /** Only run scenarios whose name includes this substring. */
   filter?: string;
-  /** Stop after the first failing scenario. */
+  /** Stop after the first failing scenario (implies sequential). */
   bail?: boolean;
+  /** Run up to N scenarios in parallel (default 1). */
+  concurrency?: number;
+  /** Receives non-fatal warnings (e.g. unsafe concurrency). */
+  onWarn?: (message: string) => void;
+}
+
+/** Run async tasks with a bounded concurrency pool, preserving result order. */
+async function pool<T>(count: number, limit: number, worker: (i: number) => Promise<T>): Promise<T[]> {
+  const results = new Array<T>(count);
+  let next = 0;
+  async function runner(): Promise<void> {
+    while (next < count) {
+      const i = next++;
+      results[i] = await worker(i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, count) }, runner));
+  return results;
 }
 
 /** Run a single golden scenario against the live API and compare every step. */
@@ -86,15 +104,38 @@ export async function runGoldens(
   config: Config,
   opts: RunOptions = {},
 ): Promise<RunSummary> {
-  const results: ScenarioResult[] = [];
-
+  // Parse + filter upfront so we can size the pool and select scenarios.
+  const loaded: { file: string; golden: Golden }[] = [];
   for (const file of files) {
     const golden = await parseGolden(file);
     if (opts.filter && !golden.name.includes(opts.filter)) continue;
+    loaded.push({ file, golden });
+  }
 
-    const result = await runGoldenScenario(golden, file, config, opts);
-    results.push(result);
-    if (opts.bail && !result.ok) break;
+  // Concurrency is unsafe when scenarios share a DB that each one resets.
+  const requested = Math.max(1, opts.concurrency ?? 1);
+  const limit = opts.bail ? 1 : requested;
+  const resetActive = !opts.forceNoReset && config.reset.enabled;
+  if (limit > 1 && resetActive) {
+    opts.onWarn?.(
+      'concurrency > 1 with reset enabled: scenarios share one database and ' +
+        'will interfere. Use --no-reset, an isolated DB, or --concurrency 1.',
+    );
+  }
+
+  let results: ScenarioResult[];
+  if (limit === 1) {
+    // Sequential — supports --bail.
+    results = [];
+    for (const { file, golden } of loaded) {
+      const result = await runGoldenScenario(golden, file, config, opts);
+      results.push(result);
+      if (opts.bail && !result.ok) break;
+    }
+  } else {
+    results = await pool(loaded.length, limit, (i) =>
+      runGoldenScenario(loaded[i]!.golden, loaded[i]!.file, config, opts),
+    );
   }
 
   const passed = results.filter((r) => r.ok).length;
