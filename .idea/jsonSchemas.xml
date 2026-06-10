@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JsonSchemaMappingsProjectConfiguration">
+    <state>
+      <map>
+        <entry key="golden-test-runner spec">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="golden-test-runner spec" />
+              <option name="relativePathToSchema" value="schemas/spec.schema.json" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value="*.spec.yaml" />
+                    <option name="mappingKind" value="Pattern" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
+        <entry key="golden-test-runner golden">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="golden-test-runner golden" />
+              <option name="relativePathToSchema" value="schemas/golden.schema.json" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value="*.golden.yaml" />
+                    <option name="mappingKind" value="Pattern" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
+        <entry key="golden-test-runner config">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="golden-test-runner config" />
+              <option name="relativePathToSchema" value="schemas/config.schema.json" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value="goldentest.config.yaml" />
+                    <option name="mappingKind" value="Pattern" />
+                  </Item>
+                  <Item>
+                    <option name="path" value="goldentest.config.yml" />
+                    <option name="mappingKind" value="Pattern" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
+      </map>
+    </state>
+  </component>
+</project>

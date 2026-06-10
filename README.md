@@ -176,6 +176,32 @@ output is a **draft** to review before `generate`.
 Allow/deny lists (`import.include` / `import.exclude`, matched against the URL
 path) further narrow what's kept.
 
+## Editor support (autocomplete & validation)
+
+JSON Schemas for the config, spec, and golden files are generated from the same
+zod definitions used at runtime (so they never drift) and live in `schemas/`.
+Regenerate them after changing the schemas:
+
+```bash
+npm run gen:schema
+```
+
+- **WebStorm / IntelliJ** — already wired via `.idea/jsonSchemas.xml`: open any
+  `*.spec.yaml`, `*.golden.yaml`, or `goldentest.config.yaml` and you get field
+  completion, type checking, and hover docs. (Otherwise: *Settings → Languages &
+  Frameworks → Schemas and DSLs → JSON Schema Mappings* → add `schemas/*.schema.json`
+  with file patterns `*.spec.yaml` etc.)
+- **VS Code** — install the YAML extension (`redhat.vscode-yaml`) and map the
+  schemas in `settings.json`:
+
+  ```json
+  "yaml.schemas": {
+    "./schemas/spec.schema.json": "*.spec.yaml",
+    "./schemas/golden.schema.json": "*.golden.yaml",
+    "./schemas/config.schema.json": "goldentest.config.{yaml,yml}"
+  }
+  ```
+
 ## Programmatic API
 
 ```ts
@@ -199,7 +225,3 @@ export GOLDEN_FIXTURE_URL=http://127.0.0.1:8000
 node dist/cli.js generate --config examples/goldentest.config.yaml --file examples/signup.spec.yaml
 node dist/cli.js run --config examples/goldentest.config.yaml
 ```
-
-## License
-
-MIT

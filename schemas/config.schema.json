@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "baseUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "graphql": {
+      "default": {
+        "path": "/graphql"
+      },
+      "type": "object",
+      "properties": {
+        "path": {
+          "default": "/graphql",
+          "type": "string"
+        }
+      }
+    },
+    "reset": {
+      "default": {
+        "enabled": false,
+        "timeoutMs": 30000
+      },
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "command": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "timeoutMs": {
+          "default": 30000,
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "defaults": {
+      "default": {
+        "headers": {},
+        "timeoutMs": 10000
+      },
+      "type": "object",
+      "properties": {
+        "headers": {
+          "default": {},
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "timeoutMs": {
+          "default": 10000,
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "normalize": {
+      "default": {
+        "ignorePaths": [],
+        "matchers": []
+      },
+      "type": "object",
+      "properties": {
+        "ignorePaths": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "matchers": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "uuid",
+                  "any",
+                  "regex",
+                  "number",
+                  "iso-date"
+                ]
+              },
+              "pattern": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "type"
+            ]
+          }
+        }
+      }
+    },
+    "paths": {
+      "default": {
+        "specs": "tests/**/*.spec.yaml",
+        "goldenDir": "tests/__golden__"
+      },
+      "type": "object",
+      "properties": {
+        "specs": {
+          "default": "tests/**/*.spec.yaml",
+          "type": "string"
+        },
+        "goldenDir": {
+          "default": "tests/__golden__",
+          "type": "string"
+        }
+      }
+    },
+    "import": {
+      "default": {
+        "include": [],
+        "exclude": []
+      },
+      "type": "object",
+      "properties": {
+        "include": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclude": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "baseUrl"
+  ],
+  "title": "golden-test-runner — config file"
+}

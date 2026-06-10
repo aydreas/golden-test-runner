@@ -1,6 +1,6 @@
 name: user-signup-and-first-post
 specHash: sha256:817eaa6ba8e2de290dc30d6573121c1e950d142029762d0687552182929be4ec
-generatedAt: 2026-06-10T11:26:10.780Z
+generatedAt: "2026-06-10T12:04:19.142Z"
 config:
   reset: true
 steps:
@@ -38,7 +38,7 @@ steps:
       body:
         data:
           createPost:
-            id: dc13fb0a-c211-4ecb-b551-0161348464d5
+            id: 2fea7f7d-c9bb-4c8d-b129-9b6185c9b0d1
             title: Hello World
             status: draft
             author:
