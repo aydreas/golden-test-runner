@@ -19,7 +19,7 @@ spec.yaml ──generate──▶ *.golden.yaml ──run──▶ pass/fail + f
 npm install --save-dev golden-test-runner
 ```
 
-Requires Node 20+. Exposes a `golden` CLI and a programmatic API.
+Requires Node 22+. Exposes a `golden` CLI and a programmatic API.
 
 ## Quick start
 
