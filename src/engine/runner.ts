@@ -10,6 +10,7 @@ export interface StepExecution {
   step: SpecStep | GoldenStep;
   request: SentRequest;
   response: TransportResponse;
+  durationMs: number;
 }
 
 export interface ScenarioRun {
@@ -27,6 +28,8 @@ export interface RunScenarioOptions {
    * (left the DB clean). Decided by the orchestrator, which knows the ordering.
    */
   skipReset?: boolean;
+  /** Called immediately before the DB reset command runs. */
+  onReset?: () => void;
 }
 
 /**
@@ -40,6 +43,7 @@ export async function runScenario(
   opts: RunScenarioOptions = {},
 ): Promise<ScenarioRun> {
   if (!opts.skipReset && resetEnabled(config, opts.forceNoReset ?? false)) {
+    opts.onReset?.();
     await runReset(config);
   }
 
@@ -49,8 +53,10 @@ export async function runScenario(
   for (let index = 0; index < steps.length; index++) {
     const step = steps[index]!;
     try {
+      const t0 = Date.now();
       const { request, response } = await executeStep(step, config, context);
-      executions.push({ index, step, request, response });
+      const durationMs = Date.now() - t0;
+      executions.push({ index, step, request, response, durationMs });
       applyCaptures(step.capture, response.body, context);
     } catch (err) {
       return {

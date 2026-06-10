@@ -1,5 +1,5 @@
 import type { RunSummary } from '../run.js';
-import { renderPretty } from './pretty.js';
+import { renderPretty, renderScenarioBlock, renderSummaryLine } from './pretty.js';
 import { renderJson } from './json.js';
 import { renderJunit } from './junit.js';
 
@@ -20,4 +20,4 @@ export function render(kind: ReporterKind, summary: RunSummary): string {
   }
 }
 
-export { renderPretty, renderJson, renderJunit };
+export { renderPretty, renderScenarioBlock, renderSummaryLine, renderJson, renderJunit };

@@ -88,8 +88,7 @@ Requires Node 20+. Exposes a `golden` CLI and a programmatic API.
   scenario leaves the DB clean), which speeds up suites with read-only flows. A
   scenario after a non-pure one still resets, so every scenario sees clean
   state. `golden import` sets `pure` automatically when a recording contains
-  only `GET`/`HEAD` requests and GraphQL queries (no mutations). Only applies to
-  sequential runs (`--concurrency 1`).
+  only `GET`/`HEAD` requests and GraphQL queries (no mutations).
 
 ### How volatile / dynamic values are handled
 
@@ -124,32 +123,29 @@ Runs spec(s) against the live API and records goldens.
 
 ### `golden run`
 
-Replays golden(s) against the live API and diffs responses. Exits non-zero on
-any failure.
+Replays golden(s) against the live API and diffs responses. Scenarios are
+printed as they complete. Each step shows its duration.
+A `↺ resetting database` notice appears on stderr before each DB reset.
+Exits non-zero on any failure.
 
 | Flag | Description |
 |------|-------------|
 | `-f, --file <glob>` | golden file or glob (default: `goldenDir/**/*.golden.yaml`) |
 | `-c, --config <path>` | config file path |
 | `--no-reset` | skip the DB reset hook |
-| `--bail` | stop on the first failing scenario (implies sequential) |
+| `--bail` | stop on the first failing scenario |
 | `--filter <name>` | only run scenarios whose name includes this substring |
-| `--concurrency <n>` | run N scenarios in parallel (see caveat) |
 | `--reporter <kind>` | `pretty` (default), `json`, or `junit` |
 | `--strict` | fail (not just warn) when a golden is out of date vs its spec |
-
-> **Concurrency caveat:** scenarios share one database. Running them in parallel
-> while per-scenario reset is enabled will let them interfere. Use
-> `--concurrency` only with `--no-reset` or an isolated/per-scenario database.
 
 Example failure report:
 
 ```
 ✗ user-signup-and-first-post   (tests/__golden__/user-signup-and-first-post.golden.yaml)
-  ✓ 1 create-user
-  ✗ 2 create-post   GraphQL CreatePost
+  ✓ 1 create-user (34ms)
+  ✗ 2 create-post (21ms)   GraphQL CreatePost
         data.createPost.status   expected "draft", got "published"
-  ✓ 3 login-rest
+  ✓ 3 login-rest (18ms)
 
 1 scenario, 0 passed, 1 failed (1 field mismatch)
 ```

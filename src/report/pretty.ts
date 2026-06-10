@@ -23,7 +23,8 @@ function requestLabel(req: SentRequest): string {
 function renderStep(step: StepResult): string[] {
   const lines: string[] = [];
   const marker = step.ok ? PASS : FAIL;
-  const head = `  ${marker} ${step.index + 1} ${step.name}`;
+  const dur = step.durationMs != null ? ` ${dim(`(${step.durationMs}ms)`)}` : '';
+  const head = `  ${marker} ${step.index + 1} ${step.name}${dur}`;
   lines.push(step.ok ? head : `${head}   ${dim(requestLabel(step.request))}`);
 
   if (step.statusMismatch) {
@@ -56,13 +57,13 @@ function renderScenario(result: ScenarioResult): string[] {
   return lines;
 }
 
-export function renderPretty(summary: RunSummary): string {
-  const lines: string[] = [];
-  for (const result of summary.results) {
-    lines.push(...renderScenario(result));
-    lines.push('');
-  }
+/** One scenario block (header + steps + blank line). Safe to write to stdout incrementally. */
+export function renderScenarioBlock(result: ScenarioResult): string {
+  return renderScenario(result).join('\n') + '\n\n';
+}
 
+/** Final summary line only (scenario/pass/fail counts). */
+export function renderSummaryLine(summary: RunSummary): string {
   const fieldMismatches = summary.results.reduce(
     (n, r) => n + r.steps.reduce((m, s) => m + s.mismatches.length + (s.statusMismatch ? 1 : 0), 0),
     0,
@@ -72,7 +73,9 @@ export function renderPretty(summary: RunSummary): string {
     `${total} scenario${total === 1 ? '' : 's'}, ` +
     `${summary.passed} passed, ${summary.failed} failed` +
     (fieldMismatches > 0 ? ` (${fieldMismatches} field mismatch${fieldMismatches === 1 ? '' : 'es'})` : '');
-  lines.push(summary.ok ? green(tail) : red(tail));
+  return summary.ok ? green(tail) : red(tail);
+}
 
-  return lines.join('\n');
+export function renderPretty(summary: RunSummary): string {
+  return summary.results.map(renderScenarioBlock).join('') + renderSummaryLine(summary);
 }

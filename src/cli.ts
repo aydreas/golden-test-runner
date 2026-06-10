@@ -4,7 +4,7 @@ import { loadConfig } from './config/load.js';
 import { discover } from './spec/discover.js';
 import { generate } from './golden/generate.js';
 import { runGoldens } from './run.js';
-import { render, isReporterKind } from './report/index.js';
+import { render, isReporterKind, renderScenarioBlock, renderSummaryLine } from './report/index.js';
 import { loadSpecHashes } from './spec/drift.js';
 import { importHar } from './import/index.js';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -45,6 +45,7 @@ program
           update: opts.update,
           skipReset: skipNextReset,
           now: new Date().toISOString(),
+          onReset: () => process.stderr.write('↺ resetting database\n'),
         });
         if (skipped) {
           // Not run → DB untouched → leave the skip state as the last run scenario set it.
@@ -67,7 +68,6 @@ program
   .option('--no-reset', 'skip the DB reset hook')
   .option('--bail', 'stop on first failing scenario')
   .option('--filter <name>', 'only run scenarios whose name matches')
-  .option('--concurrency <n>', 'number of scenarios to run in parallel', (v) => parseInt(v, 10))
   .option('--reporter <kind>', 'pretty | json | junit', 'pretty')
   .option('--strict', 'fail (not just warn) when a golden is out of date vs its spec')
   .action(async (opts) => {
@@ -78,17 +78,24 @@ program
       const goldens = await discover(pattern);
       if (goldens.length === 0) fail(`No golden files matched: ${pattern}`);
 
+      const isPretty = opts.reporter === 'pretty';
       const summary = await runGoldens(goldens, config, {
         forceNoReset: opts.reset === false,
         filter: opts.filter,
         bail: opts.bail,
-        concurrency: opts.concurrency,
         strict: opts.strict,
         specHashes: await loadSpecHashes(config),
-        onWarn: (msg) => console.error(`⚠ ${msg}`),
+        onReset: () => process.stderr.write('↺ resetting database\n'),
+        onScenarioResult: isPretty
+          ? (result) => process.stdout.write(renderScenarioBlock(result))
+          : undefined,
       });
 
-      console.log(render(opts.reporter, summary));
+      if (isPretty) {
+        console.log(renderSummaryLine(summary));
+      } else {
+        console.log(render(opts.reporter, summary));
+      }
       if (!summary.ok) process.exit(1);
     } catch (err) {
       fail(String((err as Error).message));

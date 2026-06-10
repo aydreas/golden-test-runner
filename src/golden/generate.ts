@@ -20,6 +20,8 @@ export interface GenerateOptions {
   update?: boolean;
   /** Skip the reset for this scenario (preceding scenario was `pure`). */
   skipReset?: boolean;
+  /** Called immediately before the DB reset command runs. */
+  onReset?: () => void;
 }
 
 export interface GenerateResult {
@@ -38,6 +40,7 @@ export async function buildGolden(
   const run = await runScenario(spec.steps, config, {
     forceNoReset: opts.forceNoReset,
     skipReset: opts.skipReset,
+    onReset: opts.onReset,
   });
 
   if (run.error) {
