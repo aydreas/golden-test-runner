@@ -3,6 +3,9 @@ import { Command } from 'commander';
 import { loadConfig } from './config/load.js';
 import { discover } from './spec/discover.js';
 import { generate } from './golden/generate.js';
+import { runGoldens } from './run.js';
+import { renderPretty } from './report/pretty.js';
+import { join } from 'node:path';
 
 const program = new Command();
 
@@ -54,9 +57,24 @@ program
   .option('--filter <name>', 'only run scenarios whose name matches')
   .option('--concurrency <n>', 'number of scenarios to run in parallel', (v) => parseInt(v, 10))
   .option('--reporter <kind>', 'pretty | json | junit', 'pretty')
-  .action(async () => {
-    console.error('run: not implemented yet (M3)');
-    process.exitCode = 1;
+  .action(async (opts) => {
+    try {
+      const { config } = await loadConfig({ configPath: opts.config });
+      const pattern = opts.file ?? join(config.paths.goldenDir, '**/*.golden.yaml');
+      const goldens = await discover(pattern);
+      if (goldens.length === 0) fail(`No golden files matched: ${pattern}`);
+
+      const summary = await runGoldens(goldens, config, {
+        forceNoReset: opts.reset === false,
+        filter: opts.filter,
+        bail: opts.bail,
+      });
+
+      console.log(renderPretty(summary));
+      if (!summary.ok) process.exit(1);
+    } catch (err) {
+      fail(String((err as Error).message));
+    }
   });
 
 program
