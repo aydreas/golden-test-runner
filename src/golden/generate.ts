@@ -1,4 +1,4 @@
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir, access } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import type { Config } from '../config/schema.js';
 import type { Spec, Golden, GoldenStep } from '../spec/types.js';
@@ -16,11 +16,15 @@ export interface GenerateOptions {
   outDir?: string;
   /** ISO timestamp to stamp into the golden (injected for determinism in tests). */
   now?: string;
+  /** Overwrite an existing golden; without this, an existing golden is skipped. */
+  update?: boolean;
 }
 
 export interface GenerateResult {
-  golden: Golden;
+  golden?: Golden;
   outputPath: string;
+  /** True when an existing golden was left untouched (no --update). */
+  skipped: boolean;
 }
 
 /** Build the in-memory golden for a spec by running it against the live API. */
@@ -78,12 +82,26 @@ export async function generate(
   opts: GenerateOptions = {},
 ): Promise<GenerateResult> {
   const spec = await parseSpec(specFile);
-  const golden = await buildGolden(spec, config, opts);
-
   const outDir = resolve(opts.outDir ?? config.paths.goldenDir);
   const outputPath = join(outDir, `${spec.name}.golden.yaml`);
+
+  // Don't clobber an existing golden (or hit the API) unless --update.
+  if (!opts.update && (await exists(outputPath))) {
+    return { outputPath, skipped: true };
+  }
+
+  const golden = await buildGolden(spec, config, opts);
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, serializeGolden(golden), 'utf8');
 
-  return { golden, outputPath };
+  return { golden, outputPath, skipped: false };
+}
+
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -58,6 +58,29 @@ describe('comparator', () => {
     it('accepts any live value on first bind (fresh-DB ids)', () => {
       expect(cmp({ id: '{{u}}' }, { id: 'a-totally-different-id' })).toEqual([]);
     });
+
+    it('enforces consistency even when a matcher path overlaps the placeholder', () => {
+      // The headline case: $..id matcher AND {{u}} on the same nodes. The
+      // placeholder must still bind+check, not be shadowed by the type-check.
+      const matchers: Matcher[] = [{ path: '$..id', type: 'uuid' }];
+      const u1 = '11111111-1111-1111-1111-111111111111';
+      const u2 = '22222222-2222-2222-2222-222222222222';
+
+      // Consistent ids (proper chaining) → pass.
+      expect(
+        cmp({ a: { id: '{{u}}' }, b: { id: '{{u}}' } }, { a: { id: u1 }, b: { id: u1 } }, { matchers }),
+      ).toEqual([]);
+
+      // Two valid uuids that differ → must be a placeholder mismatch (the real
+      // API bug this tool exists to catch), NOT silently absorbed by the matcher.
+      const m = cmp(
+        { a: { id: '{{u}}' }, b: { id: '{{u}}' } },
+        { a: { id: u1 }, b: { id: u2 } },
+        { matchers },
+      );
+      expect(m).toHaveLength(1);
+      expect(m[0]!.kind).toBe('placeholder');
+    });
   });
 
   it('skips <<ignore>> fields', () => {

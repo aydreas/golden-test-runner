@@ -38,12 +38,17 @@ program
       if (specs.length === 0) fail(`No spec files matched: ${pattern}`);
 
       for (const specFile of specs) {
-        const { outputPath } = await generate(specFile, config, {
+        const { outputPath, skipped } = await generate(specFile, config, {
           forceNoReset: opts.reset === false,
           outDir: opts.out,
+          update: opts.update,
           now: new Date().toISOString(),
         });
-        console.log(`✓ generated ${outputPath}`);
+        if (skipped) {
+          console.log(`• skipped ${outputPath} (exists — use --update to regenerate)`);
+        } else {
+          console.log(`✓ generated ${outputPath}`);
+        }
       }
     } catch (err) {
       fail(String((err as Error).message));

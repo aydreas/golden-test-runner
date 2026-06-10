@@ -78,22 +78,10 @@ function walk(golden: unknown, live: unknown, pointer: string, ctx: CompareCtx):
   if (golden === IGNORE_SENTINEL) return;
   if (ctx.ignored.has(pointer)) return;
 
-  // Matcher governs this node: type/shape check against the live value.
-  const matcher = ctx.governed.get(pointer);
-  if (matcher) {
-    if (!matcherOk(matcher.type, live, matcher.pattern)) {
-      ctx.mismatches.push({
-        path: display(pointer),
-        kind: 'matcher',
-        message: `expected ${matcher.type}${matcher.pattern ? ` /${matcher.pattern}/` : ''}, got ${JSON.stringify(live)}`,
-        expected: matcher.type,
-        actual: live,
-      });
-    }
-    return;
-  }
-
-  // Placeholder: consistency wildcard.
+  // Placeholder: consistency wildcard. Checked BEFORE matchers — an authored
+  // {{name}} is the more specific constraint, and a matcher path (e.g. $..id)
+  // often overlaps it. Matchers only govern nodes the golden left as a
+  // representative concrete value.
   if (typeof golden === 'string') {
     const m = golden.match(PLACEHOLDER_RE);
     if (m) {
@@ -113,6 +101,21 @@ function walk(golden: unknown, live: unknown, pointer: string, ctx: CompareCtx):
       }
       return;
     }
+  }
+
+  // Matcher governs this node: type/shape check against the live value.
+  const matcher = ctx.governed.get(pointer);
+  if (matcher) {
+    if (!matcherOk(matcher.type, live, matcher.pattern)) {
+      ctx.mismatches.push({
+        path: display(pointer),
+        kind: 'matcher',
+        message: `expected ${matcher.type}${matcher.pattern ? ` /${matcher.pattern}/` : ''}, got ${JSON.stringify(live)}`,
+        expected: matcher.type,
+        actual: live,
+      });
+    }
+    return;
   }
 
   // Arrays.
