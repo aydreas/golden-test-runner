@@ -5,6 +5,7 @@ import { discover } from './spec/discover.js';
 import { generate } from './golden/generate.js';
 import { runGoldens } from './run.js';
 import { render, isReporterKind } from './report/index.js';
+import { loadSpecHashes } from './spec/drift.js';
 import { join } from 'node:path';
 
 const program = new Command();
@@ -57,6 +58,7 @@ program
   .option('--filter <name>', 'only run scenarios whose name matches')
   .option('--concurrency <n>', 'number of scenarios to run in parallel', (v) => parseInt(v, 10))
   .option('--reporter <kind>', 'pretty | json | junit', 'pretty')
+  .option('--strict', 'fail (not just warn) when a golden is out of date vs its spec')
   .action(async (opts) => {
     try {
       if (!isReporterKind(opts.reporter)) fail(`Unknown reporter: ${opts.reporter}`);
@@ -70,6 +72,8 @@ program
         filter: opts.filter,
         bail: opts.bail,
         concurrency: opts.concurrency,
+        strict: opts.strict,
+        specHashes: await loadSpecHashes(config),
         onWarn: (msg) => console.error(`⚠ ${msg}`),
       });
 

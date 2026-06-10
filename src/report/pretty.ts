@@ -42,6 +42,10 @@ function renderScenario(result: ScenarioResult): string[] {
   const marker = result.ok ? PASS : FAIL;
   lines.push(`${marker} ${bold(result.name)}   ${dim(`(${result.file})`)}`);
 
+  if (result.drift) {
+    lines.push(`  ${c(33, '⚠')} spec drift — golden was generated from a different spec (regenerate)`);
+  }
+
   for (const step of result.steps) lines.push(...renderStep(step));
 
   if (result.error) {

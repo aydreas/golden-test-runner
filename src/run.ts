@@ -22,6 +22,8 @@ export interface ScenarioResult {
   steps: StepResult[];
   /** Set when the scenario could not complete (transport/capture error). */
   error?: { stepIndex: number; stepName: string; message: string };
+  /** Set when the golden's specHash no longer matches the current spec (§12). */
+  drift?: { expected: string; actual: string };
 }
 
 export interface RunSummary {
@@ -41,6 +43,10 @@ export interface RunOptions {
   concurrency?: number;
   /** Receives non-fatal warnings (e.g. unsafe concurrency). */
   onWarn?: (message: string) => void;
+  /** Current spec hashes by scenario name, for drift detection. */
+  specHashes?: Map<string, string>;
+  /** Treat spec drift as a failure (default: warn only). */
+  strict?: boolean;
 }
 
 /** Run async tasks with a bounded concurrency pool, preserving result order. */
@@ -94,8 +100,14 @@ export async function runGoldenScenario(
     };
   });
 
-  const ok = !run.error && steps.every((s) => s.ok);
-  return { name: golden.name, file, ok, steps, error: run.error };
+  const currentHash = opts.specHashes?.get(golden.name);
+  const drift =
+    golden.specHash && currentHash && golden.specHash !== currentHash
+      ? { expected: golden.specHash, actual: currentHash }
+      : undefined;
+
+  const ok = !run.error && steps.every((s) => s.ok) && !(drift && opts.strict);
+  return { name: golden.name, file, ok, steps, error: run.error, drift };
 }
 
 /** Run a set of golden files and aggregate the results. */
