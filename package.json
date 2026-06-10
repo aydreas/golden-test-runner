@@ -1,0 +1,48 @@
+{
+  "name": "golden-test-runner",
+  "version": "0.1.0",
+  "description": "Golden-sample e2e test runner for REST and GraphQL APIs. Generate goldens from hand-written specs, then run and diff against a live server.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "golden": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "cosmiconfig": "^9.0.2",
+    "execa": "^9.6.1",
+    "jest-diff": "^30.4.1",
+    "jsonpath-plus": "^10.4.0",
+    "tinyglobby": "^0.2.17",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "graphql": "^16.14.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
