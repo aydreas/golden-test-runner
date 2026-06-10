@@ -1,0 +1,38 @@
+name: user-signup-and-first-post
+description: Sign up a user over GraphQL, create a post as that user, then log in over REST.
+
+config:
+  reset: true
+
+steps:
+  - name: create-user
+    graphql:
+      query: |
+        mutation CreateUser($email: String!) {
+          createUser(email: $email) { id email createdAt }
+        }
+      variables:
+        email: alice@example.com
+    capture:
+      userId: "$.data.createUser.id"
+
+  - name: create-post
+    graphql:
+      query: |
+        mutation CreatePost($author: ID!, $title: String!) {
+          createPost(authorId: $author, title: $title) {
+            id title status author { id }
+          }
+        }
+      variables:
+        author: "{{userId}}"
+        title: Hello World
+
+  - name: login-rest
+    rest:
+      method: POST
+      path: /api/login
+      headers: { Content-Type: application/json }
+      body: { email: alice@example.com, password: secret }
+    capture:
+      token: "$.token"

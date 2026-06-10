@@ -1,0 +1,23 @@
+baseUrl: http://127.0.0.1:8000
+graphql:
+  path: /graphql
+
+reset:
+  enabled: true
+  command: node test/fixture/reset.mjs
+  timeoutMs: 30000
+
+defaults:
+  timeoutMs: 10000
+
+normalize:
+  ignorePaths:
+    - "$..createdAt"
+    - "$..issuedAt"
+  matchers:
+    - { path: "$..id", type: uuid }
+    - { path: "$..token", type: uuid }
+
+paths:
+  specs: examples/**/*.spec.yaml
+  goldenDir: examples/__golden__
