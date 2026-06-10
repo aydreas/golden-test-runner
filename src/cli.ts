@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { loadConfig } from './config/load.js';
+import { discover } from './spec/discover.js';
+import { generate } from './golden/generate.js';
 
 const program = new Command();
+
+function fail(message: string): never {
+  console.error(message);
+  process.exit(1);
+}
 
 program
   .name('golden')
@@ -16,9 +24,24 @@ program
   .option('-c, --config <path>', 'path to config file')
   .option('--no-reset', 'skip the DB reset hook')
   .option('--update', 'regenerate existing goldens')
-  .action(async () => {
-    console.error('generate: not implemented yet (M2)');
-    process.exitCode = 1;
+  .action(async (opts) => {
+    try {
+      const { config } = await loadConfig({ configPath: opts.config });
+      const pattern = opts.file ?? config.paths.specs;
+      const specs = await discover(pattern);
+      if (specs.length === 0) fail(`No spec files matched: ${pattern}`);
+
+      for (const specFile of specs) {
+        const { outputPath } = await generate(specFile, config, {
+          forceNoReset: opts.reset === false,
+          outDir: opts.out,
+          now: new Date().toISOString(),
+        });
+        console.log(`✓ generated ${outputPath}`);
+      }
+    } catch (err) {
+      fail(String((err as Error).message));
+    }
   });
 
 program

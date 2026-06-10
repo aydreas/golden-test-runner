@@ -1,0 +1,62 @@
+name: user-signup-and-first-post
+specHash: sha256:817eaa6ba8e2de290dc30d6573121c1e950d142029762d0687552182929be4ec
+generatedAt: 2026-06-10T11:26:10.780Z
+config:
+  reset: true
+steps:
+  - name: create-user
+    capture:
+      userId: $.data.createUser.id
+    graphql:
+      query: |
+        mutation CreateUser($email: String!) {
+          createUser(email: $email) { id email createdAt }
+        }
+      variables:
+        email: alice@example.com
+    response:
+      status: 200
+      body:
+        data:
+          createUser:
+            id: "{{userId}}"
+            email: alice@example.com
+            createdAt: <<ignore>>
+  - name: create-post
+    graphql:
+      query: |
+        mutation CreatePost($author: ID!, $title: String!) {
+          createPost(authorId: $author, title: $title) {
+            id title status author { id }
+          }
+        }
+      variables:
+        author: "{{userId}}"
+        title: Hello World
+    response:
+      status: 200
+      body:
+        data:
+          createPost:
+            id: dc13fb0a-c211-4ecb-b551-0161348464d5
+            title: Hello World
+            status: draft
+            author:
+              id: "{{userId}}"
+  - name: login-rest
+    capture:
+      token: $.token
+    rest:
+      method: POST
+      path: /api/login
+      headers:
+        Content-Type: application/json
+      body:
+        email: alice@example.com
+        password: secret
+    response:
+      status: 200
+      body:
+        token: "{{token}}"
+        email: alice@example.com
+        issuedAt: <<ignore>>
