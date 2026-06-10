@@ -6,7 +6,9 @@ import { generate } from './golden/generate.js';
 import { runGoldens } from './run.js';
 import { render, isReporterKind } from './report/index.js';
 import { loadSpecHashes } from './spec/drift.js';
-import { join } from 'node:path';
+import { importHar } from './import/index.js';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join, basename } from 'node:path';
 
 const program = new Command();
 
@@ -92,9 +94,23 @@ program
   .option('-o, --out <path>', 'output spec path')
   .option('-c, --config <path>', 'path to config file')
   .option('--dry-run', 'print the spec without writing it')
-  .action(async () => {
-    console.error('import: not implemented yet (M5)');
-    process.exitCode = 1;
+  .action(async (opts) => {
+    try {
+      const { config } = await loadConfig({ configPath: opts.config });
+      const har = JSON.parse(await readFile(opts.har, 'utf8'));
+      const name = opts.name ?? basename(opts.har).replace(/\.har$/i, '');
+      const { yaml, stepCount } = importHar(har, config, name);
+
+      if (opts.dryRun) {
+        console.log(yaml);
+        return;
+      }
+      const outPath = opts.out ?? `${name}.spec.yaml`;
+      await writeFile(outPath, yaml, 'utf8');
+      console.log(`✓ imported ${stepCount} steps → ${outPath} (review before generate)`);
+    } catch (err) {
+      fail(String((err as Error).message));
+    }
   });
 
 program.parseAsync(process.argv);
