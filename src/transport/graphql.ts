@@ -1,7 +1,7 @@
 import type { Config } from '../config/schema.js';
 import type { GraphqlRequest } from '../spec/types.js';
 import { Context } from '../engine/context.js';
-import { interpolateDeep } from '../engine/interpolate.js';
+import { interpolateDeep, interpolateDefaultHeaders } from '../engine/interpolate.js';
 
 export interface SentGraphqlRequest {
   kind: 'graphql';
@@ -26,7 +26,7 @@ export function buildGraphqlRequest(
 
   const url = new URL(config.graphql.path, config.baseUrl).toString();
   const headers: Record<string, string> = {
-    ...interpolateDeep(config.defaults.headers, ctx),
+    ...interpolateDefaultHeaders(config.defaults.headers, ctx),
     'Content-Type': 'application/json',
   };
 

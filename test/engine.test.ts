@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { Context } from '../src/engine/context.js';
-import { interpolateString, interpolateDeep, InterpolationError } from '../src/engine/interpolate.js';
+import {
+  interpolateString,
+  interpolateDeep,
+  interpolateDefaultHeaders,
+  InterpolationError,
+} from '../src/engine/interpolate.js';
 import { applyCaptures, evalPath, CaptureError } from '../src/engine/capture.js';
 
 describe('interpolation', () => {
@@ -28,6 +33,20 @@ describe('interpolation', () => {
 
   it('throws on an unknown variable', () => {
     expect(() => interpolateString('{{missing}}', new Context())).toThrow(InterpolationError);
+  });
+
+  it('drops default headers with unbound vars, sends them once bound (auth pattern)', () => {
+    const headers = { Authorization: 'Bearer {{token}}', 'X-Static': 'v1' };
+    const before = new Context();
+    // pre-login: Authorization omitted, static header kept
+    expect(interpolateDefaultHeaders(headers, before)).toEqual({ 'X-Static': 'v1' });
+
+    const after = new Context();
+    after.bind('token', 'abc');
+    expect(interpolateDefaultHeaders(headers, after)).toEqual({
+      Authorization: 'Bearer abc',
+      'X-Static': 'v1',
+    });
   });
 });
 

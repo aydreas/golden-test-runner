@@ -24,6 +24,29 @@ export function interpolateString(input: string, ctx: Context): unknown {
   });
 }
 
+/**
+ * Interpolate default headers leniently: a header whose placeholders aren't all
+ * bound yet is omitted rather than throwing. This is what lets the configured
+ * auth pattern (`Authorization: "Bearer {{token}}"`) work — the header simply
+ * isn't sent until a login step binds `token`. Request-level interpolation
+ * stays strict (an unbound var there is a real typo).
+ */
+export function interpolateDefaultHeaders(
+  headers: Record<string, string>,
+  ctx: Context,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [name, value] of Object.entries(headers)) {
+    try {
+      out[name] = String(interpolateString(value, ctx));
+    } catch (err) {
+      if (err instanceof InterpolationError) continue; // drop until bound
+      throw err;
+    }
+  }
+  return out;
+}
+
 /** Recursively interpolate every string within a value. */
 export function interpolateDeep<T>(value: T, ctx: Context): T {
   if (typeof value === 'string') {

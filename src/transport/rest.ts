@@ -1,7 +1,7 @@
 import type { Config } from '../config/schema.js';
 import type { RestRequest } from '../spec/types.js';
 import { Context } from '../engine/context.js';
-import { interpolateDeep } from '../engine/interpolate.js';
+import { interpolateDeep, interpolateDefaultHeaders } from '../engine/interpolate.js';
 
 export interface SentRestRequest {
   kind: 'rest';
@@ -24,7 +24,7 @@ export function buildRestRequest(rest: RestRequest, config: Config, ctx: Context
   }
 
   const headers: Record<string, string> = {
-    ...interpolateDeep(config.defaults.headers, ctx),
+    ...interpolateDefaultHeaders(config.defaults.headers, ctx),
     ...(interpolated.headers ?? {}),
   };
 
