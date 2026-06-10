@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Golden-sample e2e test runner for REST and GraphQL APIs. Generate goldens from hand-written specs, then run and diff against a live server.",
   "type": "module",
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "bin": {
     "golden": "dist/cli.js"
   },
